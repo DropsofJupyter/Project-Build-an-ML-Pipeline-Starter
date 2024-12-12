@@ -17,7 +17,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OrdinalEncoder, FunctionTransformer
+from sklearn.preprocessing import OrdinalEncoder, FunctionTransformer, OneHotEncoder
 
 import wandb
 from sklearn.ensemble import RandomForestRegressor
@@ -52,7 +52,7 @@ def go(args):
     rf_config['random_state'] = args.random_seed
 
     # Use run.use_artifact(...).file() to get the train and validation artifact
-    # and save the returned path in train_local_pat
+    # and save the returned path in train_local_path
     trainval_local_path = run.use_artifact(args.trainval_artifact).file()
    
     X = pd.read_csv(trainval_local_path)
@@ -73,8 +73,11 @@ def go(args):
 
     ######################################
     # Fit the pipeline sk_pipe by calling the .fit method on X_train and y_train
-    # YOUR CODE HERE
+    # YOUR CODE HERE --- DONE ---
+    sk_pipe.fit(X_train,y_train,)
     ######################################
+
+    
 
     # Compute r2 and MAE
     logger.info("Scoring")
@@ -94,10 +97,11 @@ def go(args):
 
     ######################################
     # Save the sk_pipe pipeline as a mlflow.sklearn model in the directory "random_forest_dir"
-    # HINT: use mlflow.sklearn.save_model
+    # HINT: use mlflow.sklearn.save_model --- DONE ---
     signature = mlflow.models.infer_signature(X_val, y_pred)
     mlflow.sklearn.save_model(
-        # YOUR CODE HERE
+        sk_model=sk_pipe,
+        path="random_forest_dir",
         signature = signature,
         input_example = X_train.iloc[:5]
     )
@@ -108,7 +112,7 @@ def go(args):
     artifact = wandb.Artifact(
         args.output_artifact,
         type = 'model_export',
-        description = 'Trained ranfom forest artifact',
+        description = 'Trained random forest artifact',
         metadata = rf_config
     )
     artifact.add_dir('random_forest_dir')
@@ -121,8 +125,10 @@ def go(args):
     # Here we save variable r_squared under the "r2" key
     run.summary['r2'] = r_squared
     # Now save the variable mae under the key "mae".
-    # YOUR CODE HERE
+    # YOUR CODE HERE  --- DONE ---
+    run.summary['mae'] = mae
     ######################################
+    
 
     # Upload to W&B the feture importance visualization
     run.log(
@@ -163,8 +169,10 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
     # Build a pipeline with two steps:
     # 1 - A SimpleImputer(strategy="most_frequent") to impute missing values
     # 2 - A OneHotEncoder() step to encode the variable
+    # YOUR CODE HERE
     non_ordinal_categorical_preproc = make_pipeline(
-        # YOUR CODE HERE
+        SimpleImputer(strategy="most_frequent"),
+        OneHotEncoder()
     )
     ######################################
 
@@ -227,7 +235,8 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
 
     sk_pipe = Pipeline(
         steps =[
-        # YOUR CODE HERE
+        ('preprocessor', preprocessor),
+        ('random_forest', random_forest)
         ]
     )
 

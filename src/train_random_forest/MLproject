@@ -21,7 +21,7 @@ entry_points:
       stratify_by:
         description: Column to use for stratification (if any)
         type: string
-        default: 'none'
+        default: 'None'
 
       rf_config:
         description: Random forest configuration. A path to a JSON file with the configuration that will
